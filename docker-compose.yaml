@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+#  app:
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    container_name: service
+#    restart: unless-stopped
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - HTTP_HOST=0.0.0.0
+#      - HTTP_PORT=8080
+#      - DB_HOST=postgres
+#      - DB_PORT=5432
+#      - DB_USER=dbuser
+#      - DB_PASSWORD=dbpassword
+#      - DB_NAME=servicedb
+#      - DB_SSL_MODE=disable
+#      - DB_DRIVER=postgres
+#      - LOG_LEVEL=0
+#      - KAFKA_BROKERS=kafka:9092
+#      - KAFKA_CONSUMER_GROUP=service-group
+#    depends_on:
+#      postgres:
+#        condition: service_healthy
+#      kafka:
+#        condition: service_started
+#    networks:
+#      - service-network
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: template-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - service-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: template-zookeeper
+    networks:
+      - service-network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+      ALLOW_ANONYMOUS_LOGIN: yes
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: template-kafka
+    networks:
+      - service-network
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: INSIDE://:29092,OUTSIDE://:9092
+      KAFKA_ADVERTISED_LISTENERS: INSIDE://:29092,OUTSIDE://127.0.0.1:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: true
+      KAFKA_DELETE_TOPIC_ENABLE: true
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    volumes:
+      - kafka-data:/var/lib/kafka
+    depends_on:
+      - zookeeper
+
+  kowl:
+    image: "quay.io/cloudhut/kowl:master"
+    container_name: template-kowl
+    networks:
+      - service-network
+    ports:
+      - "8181:8080"
+    environment:
+      - KAFKA_BROKERS=kafka:29092
+    entrypoint: ./kowl
+    depends_on:
+      - kafka
+
+networks:
+  service-network:
+    driver: bridge
+
+volumes:
+  postgres-data:
+    driver: local
+  kafka-data:
+    driver: local
