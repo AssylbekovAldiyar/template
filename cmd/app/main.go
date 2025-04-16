@@ -1,28 +1,16 @@
 package main
 
 import (
-	"flag"
+	"log"
 
-	"template/internal/app"
+	"github.com/AssylbekovAldiyar/memegen/internal/config"
+	"github.com/AssylbekovAldiyar/memegen/internal/controller"
 )
-
-var (
-	envParse bool
-	envPath  string
-)
-
-func init() {
-	flag.BoolVar(&envParse, "env.parse", true, "Whether parse envs from file or not")
-	flag.StringVar(&envPath, "env.path", "internal/app/config/local.env", "Path to env file")
-}
 
 func main() {
-	flag.Parse()
+	cfg := config.LoadConfig()
+	memeController := controller.NewMemeController(cfg)
 
-	files := make([]string, 0)
-	if envParse {
-		files = append(files, envPath)
-	}
-
-	app.Run(files...)
+	log.Printf("Сервер запущен на порту %s", cfg.ServerPort)
+	memeController.StartServer()
 }
