@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS Products (
+    Id SERIAL PRIMARY KEY,
+    Name VARCHAR(255),
+    Category_Id SERIAL,
+    Price INT,
+    Description TEXT,
+    Amount INT,
+    Created_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Updated_At TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (Category_Id) REFERENCES Categories(Id)
+);

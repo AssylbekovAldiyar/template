@@ -1,0 +1,40 @@
+services:
+- type: pserv
+  name: app
+  envVars:
+  - key: PORT
+    fromParam: APP_PORT
+  - key: ENV
+    fromParam: APP_ENV
+  - key: FILL
+    fromParam: APP_FILL
+  - key: MIGRATIONS
+    fromParam: APP_MIGRATIONS
+  - key: DSN
+    fromParam: APP_DSN
+  dockerfilePath: Dockerfile
+  context: .
+  numInstances: 1
+  ports:
+  - 8081:8080
+  dependsOn:
+  - db
+
+- type: pserv
+  name: db
+  image: postgres:16
+  envVars:
+  - key: POSTGRES_DB
+    fromParam: POSTGRES_DB
+  - key: POSTGRES_USER
+    fromParam: POSTGRES_USER
+  - key: POSTGRES_PASSWORD
+    fromParam: POSTGRES_PASSWORD
+  ports:
+  - 5433:5432
+  volumes:
+  - name: pgdata
+    mountPath: /var/lib/postgresql/data
+
+volumes:
+- name: pgdata
