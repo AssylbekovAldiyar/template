@@ -79,6 +79,4 @@ payments (
     created_at TIMESTAMP,
     updated_at TIMESTAMP
 );
-
-### Team
-Zholdybay Altynbek - 22B030543
+//Assylbekov Aldiyar 22b031242
